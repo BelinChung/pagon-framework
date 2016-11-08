@@ -81,8 +81,10 @@ class Input extends EventEmitter
         /**
          * Support input JSON data
          */
+
         if (!$this->injectors['data'] && strpos($this->type(), '/json')) {
-            $_POST = json_decode($this->body(), true);
+            $body = @(string)file_get_contents('php://input');
+            $this->injectors['data'] = json_decode($body, true);
         }
     }
 
