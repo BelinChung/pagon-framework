@@ -150,7 +150,7 @@ class ArgParser
                     throw new \InvalidArgumentException("The input argument '$argument' is invalid");
                 }
 
-                if ($arg{1} == '-') {
+                if ($arg[1] == '-') {
                     // Long argument
                     $params[] = $option['args'][] = substr($arg, 2);
                 } else {
@@ -465,8 +465,8 @@ class ArgParser
      */
     protected function isArg($str)
     {
-        if ($str{0} == '-') {
-            if ($str{1} == '-') {
+        if ($str[0] == '-') {
+            if ($str[1] == '-') {
                 return 2;
             } else {
                 return 1;

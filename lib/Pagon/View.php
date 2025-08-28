@@ -89,7 +89,7 @@ class View extends EventEmitter
             // If file exists?
             if (!is_file($injectors['dir'] . '/' . $injectors['path'])) {
                 // Try to load file from absolute path
-                if ($path{0} == '/' && is_file($path)) {
+                if ($path[0] == '/' && is_file($path)) {
                     $injectors['path'] = $path;
                     $injectors['dir'] = '';
                 } else if (!empty($injectors['app']) && ($_path = $injectors['app']->path($injectors['path']))) {
@@ -146,7 +146,7 @@ class View extends EventEmitter
                     extract((array)$this->injectors['data']);
                 }
                 ob_start();
-                include($this->injectors['dir'] . ($this->injectors['path']{0} == '/' ? '' : '/') . $this->injectors['path']);
+                include($this->injectors['dir'] . ($this->injectors['path'][0] == '/' ? '' : '/') . $this->injectors['path']);
                 $__html = ob_get_clean();
             } else if (is_callable($engine)) {
                 $__html = $engine($this->injectors['path'], $this->injectors['data'], $this->injectors['dir']);

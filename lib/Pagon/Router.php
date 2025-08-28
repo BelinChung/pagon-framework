@@ -317,7 +317,7 @@ class Router extends Middleware
         if ($path[1] !== '^') {
             $path = str_replace(array('/'), array('\\/'), $path);
             $isRegex = false;
-            if ($path{0} == '^') {
+            if ($path[0] == '^') {
                 // As regex
                 $path = '/' . $path . '/';
                 $isRegex = true;

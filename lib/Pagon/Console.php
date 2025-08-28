@@ -119,7 +119,7 @@ class Console
         } else if (strpos($text, '<') !== false) {
             // Text template for colorize, Support "#{red}I'm red#{reset}"
             $text = preg_replace_callback('/<(\/?.*?)>/', function ($match) {
-                if ($match[1]{0} == '/') return "\033[0m";
+                if ($match[1][0] == '/') return "\033[0m";
 
                 $options = array();
                 // Support {red bold}

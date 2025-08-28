@@ -304,7 +304,7 @@ class App extends EventEmitter
     public function add($path, $middleware = null, $options = array())
     {
         if ($path instanceof Middleware
-            || is_string($path) && $path{0} != '/'
+            || is_string($path) && $path[0] != '/'
             || $path instanceof \Closure
         ) {
             // If not path
@@ -962,7 +962,7 @@ class App extends EventEmitter
      */
     protected function __autoload($class)
     {
-        if ($class{0} == '\\') $class = ltrim($class, '\\');
+        if ($class[0] == '\\') $class = ltrim($class, '\\');
 
         // Alias check
         if (!empty($this->injectors['alias'][$class])) {
