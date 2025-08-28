@@ -166,8 +166,10 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
         }
 
         // Use cookie automatic?
-        ini_set('session.use_cookies', 0);
-        session_cache_limiter(false);
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            ini_set('session.use_cookies', 0);
+            session_cache_limiter(false);
+        }
 
         // Register sessions
         $this->injectors['app']->input->session = $this;
@@ -178,19 +180,21 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
             $this->injectors['store']->app = $this->injectors['app'];
 
             if ($this->injectors['global']) {
-                session_set_save_handler(
-                    array($this->injectors['store'], 'open'),
-                    array($this->injectors['store'], 'close'),
-                    array($this->injectors['store'], 'read'),
-                    array($this->injectors['store'], 'write'),
-                    array($this->injectors['store'], 'destroy'),
-                    array($this->injectors['store'], 'gc')
-                );
+                if (session_status() !== PHP_SESSION_ACTIVE) {
+                    session_set_save_handler(
+                        array($this->injectors['store'], 'open'),
+                        array($this->injectors['store'], 'close'),
+                        array($this->injectors['store'], 'read'),
+                        array($this->injectors['store'], 'write'),
+                        array($this->injectors['store'], 'destroy'),
+                        array($this->injectors['store'], 'gc')
+                    );
 
-                // Start session
-                session_id($this->injectors['id']);
-                if (!session_start()) {
-                    throw new \RuntimeException("Session start failed");
+                    // Start session
+                    session_id($this->injectors['id']);
+                    if (!session_start()) {
+                        throw new \RuntimeException("Session start failed");
+                    }
                 }
 
                 // Get all sessions
@@ -346,9 +350,10 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Array access to use such as $_SESSION
      */
 
-    public function offsetGet($offset)
+    public function &offsetGet($offset)
     {
-        return $this->getSession($offset);
+        $value = $this->getSession($offset);
+        return $value;
     }
 
     public function offsetSet($offset, $value)
