@@ -14,7 +14,7 @@ class RouterTest extends AppTest
      */
     protected $test_router;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

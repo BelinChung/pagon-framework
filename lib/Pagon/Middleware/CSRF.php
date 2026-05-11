@@ -72,6 +72,7 @@ class CSRF extends Middleware
             // If enable form injection
             $this->injectors['form']
             // And the page is html content type
+            && $this->output->type()
             && strpos($this->output->type(), 'html')
         ) {
             // Check if buffer start

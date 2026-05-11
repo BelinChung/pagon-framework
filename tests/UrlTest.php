@@ -4,14 +4,14 @@ namespace Pagon;
 
 use Pagon\Http\Input;
 
-class UrlTest extends \PHPUnit_Framework_TestCase
+class UrlTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var App
      */
     protected $app;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->app = Pagon::create(array(
             'site_url'  => 'http://apple.com/test',

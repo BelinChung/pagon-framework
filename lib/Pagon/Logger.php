@@ -114,9 +114,8 @@ class Logger extends Logger\LoggerInterface
             return str_pad(strtoupper(substr($level, 0, 6)), 6, ' ', STR_PAD_RIGHT);
         });
 
-        $that = $this;
-        register_shutdown_function(function () use ($that) {
-            $that->emit('flush');
+        register_shutdown_function(function () {
+            $this->emit('flush');
         });
     }
 

@@ -400,7 +400,7 @@ class Output extends EventEmitter
                 // Build cookie
                 $this->buildCookie(function ($key, $value, $_option) {
                     // Set cookie
-                    setcookie($key, $value, $_option['maxage'], $_option['path'], $_option['domain'], $_option['secure'], $_option['httponly']);
+                    setcookie($key, $value, $_option['maxage'], $_option['path'], $_option['domain'] ?? '', $_option['secure'], $_option['httponly']);
                 });
             }
         }
@@ -413,7 +413,7 @@ class Output extends EventEmitter
      * @param callable $cb
      * @return $this|array|Output
      */
-    public function buildCookie(\Closure $cb = null)
+    public function buildCookie(?\Closure $cb = null)
     {
         if (!$this->injectors['cookies']) return !$cb ? array() : $this;
 
@@ -475,7 +475,7 @@ class Output extends EventEmitter
      * @param array  $options
      * @return Output
      */
-    public function render($template, array $data = null, array $options = array())
+    public function render($template, ?array $data = null, array $options = array())
     {
         $this->app->render($template, $data, $options);
         return $this;
@@ -489,7 +489,7 @@ class Output extends EventEmitter
      * @param array  $options
      * @return View
      */
-    public function compile($template, array $data = null, array $options = array())
+    public function compile($template, ?array $data = null, array $options = array())
     {
         return $this->app->compile($template, $data, $options);
     }

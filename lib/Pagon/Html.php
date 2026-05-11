@@ -211,7 +211,7 @@ class Html
      * @param array|callable $wrapper
      * @return string
      */
-    public static function checkboxes($name, array $values, $checked = null, $attributes = null, $wrapper = null)
+    public static function checkboxes($name, array $values, $checked = null, ?array $attributes = null, $wrapper = null)
     {
         return self::inputGroup($name, 'checkbox', $values, $checked, $attributes, $wrapper);
     }
@@ -226,7 +226,7 @@ class Html
      * @param array|callable $wrapper
      * @return string
      */
-    public static function radios($name, array $values, $checked = null, $attributes = null, $wrapper = null)
+    public static function radios($name, array $values, $checked = null, ?array $attributes = null, $wrapper = null)
     {
         return self::inputGroup($name, 'radio', $values, $checked, $attributes, $wrapper);
     }
@@ -242,7 +242,7 @@ class Html
      * @param array|callable $wrapper
      * @return string
      */
-    public function inputGroup($name, $type, array $values, $checked = null, $attributes = null, $wrapper = null)
+    public function inputGroup($name, $type, array $values, $checked = null, ?array $attributes = null, $wrapper = null)
     {
         return self::loop($values, function ($key, $value) use (
             $name, $type, $checked, $attributes, $wrapper
@@ -276,7 +276,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function repeat($dom, array $values, array $attributes = null)
+    public static function repeat($dom, array $values, ?array $attributes = null)
     {
         return self::loop($values, function ($value) use ($dom, $attributes) {
             return Html::dom($dom, $value, $attributes);
@@ -307,7 +307,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function dom($name, $text = '', array $attributes = null)
+    public static function dom($name, $text = '', ?array $attributes = null)
     {
         $self_close = false;
         if (in_array($name, self::$self_close_tags)) {

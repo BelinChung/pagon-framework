@@ -5,7 +5,7 @@
 
 namespace Pagon;
 
-class ConfigTest extends \PHPUnit_Framework_TestCase
+class ConfigTest extends \PHPUnit\Framework\TestCase
 {
     public function testExportDefaults()
     {
@@ -21,7 +21,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testExportUnknown()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
 
         Config::export('abc');
     }
@@ -52,7 +52,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
     {
         Config::import('test', '/tmp/' . uniqid());
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
 
         Config::export('test');
     }
@@ -67,7 +67,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testLoadUnknown()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
         Config::load('/tmp/test.' . md5(microtime(true)));
     }
 
@@ -104,7 +104,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
     {
         file_put_contents('/tmp/test.abc', '{"test":"abc"}');
 
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
         Config::load('/tmp/test.abc');
 
         unlink('/tmp/test.abc');
@@ -118,7 +118,7 @@ class ConfigTest extends \PHPUnit_Framework_TestCase
 
     public function testDumpUnknownType()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
         $string = Config::encode(array('test' => 'abc'), 'abc');
     }
 }

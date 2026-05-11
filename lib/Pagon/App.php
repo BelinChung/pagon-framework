@@ -172,6 +172,20 @@ class App extends EventEmitter
         $this->input = & $this->injectors['input'];
         $this->output = & $this->injectors['output'];
         $this->router = & $this->injectors['router'];
+
+        // Auto-initialize input/output/router if not set
+        if (!$this->input) {
+            if (!$this->injectors['cli']) {
+                $this->input = new Http\Input(array('app' => $this));
+                $this->output = new Http\Output(array('app' => $this));
+            } else {
+                $this->input = new Command\Input(array('app' => $this));
+                $this->output = new Command\Output(array('app' => $this));
+            }
+        }
+        if (!$this->router) {
+            $this->router = new Router(array('app' => $this));
+        }
     }
 
     /**
@@ -612,7 +626,7 @@ class App extends EventEmitter
      * @param array  $options
      * @return void
      */
-    public function render($path, array $data = null, array $options = array())
+    public function render($path, ?array $data = null, array $options = array())
     {
         $this->output->body($this->compile($path, $data, $options)->render());
     }
@@ -624,7 +638,7 @@ class App extends EventEmitter
      * @param array  $data
      * @return mixed
      */
-    public function renderView($view, array $data = null)
+    public function renderView($view, ?array $data = null)
     {
         $this->output->body(View::create($view, $data));
     }
@@ -638,7 +652,7 @@ class App extends EventEmitter
      * @throws \RuntimeException
      * @return View
      */
-    public function compile($path, array $data = null, array $options = array())
+    public function compile($path, ?array $data = null, array $options = array())
     {
         // Check engine
         if (!isset($options['engine'])) {

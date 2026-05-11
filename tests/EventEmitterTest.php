@@ -1,21 +1,21 @@
 <?php
 namespace Pagon;
 
-class EventEmitterTest extends \PHPUnit_Framework_TestCase
+class EventEmitterTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var EventEmitter
      */
     protected $event;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->event = new EventEmitter();
     }
 
-    public function tearDown()
+    public function tearDown(): void
     {
-        $GLOBALS = array();
+        unset($GLOBALS['emit_result'], $GLOBALS['emit_arg'], $GLOBALS['emit_count']);
     }
 
     public function testSimple()

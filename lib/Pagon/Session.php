@@ -350,23 +350,23 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Array access to use such as $_SESSION
      */
 
-    public function &offsetGet($offset)
+    public function &offsetGet($offset): mixed
     {
         $value = $this->getSession($offset);
         return $value;
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         $this->setSession($offset, $value);
     }
 
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return $this->hasSession($offset);
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         $this->deleteSession($offset);
     }
@@ -375,7 +375,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Object intance can be countable
      */
 
-    public function count()
+    public function count(): int
     {
         return count($this->injectors['sessions']);
     }
@@ -384,27 +384,27 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Object instance can be loop with foreach
      */
 
-    public function rewind()
+    public function rewind(): void
     {
         reset($this->injectors['sessions']);
     }
 
-    public function current()
+    public function current(): mixed
     {
         return current($this->injectors['sessions']);
     }
 
-    public function key()
+    public function key(): mixed
     {
         return key($this->injectors['sessions']);
     }
 
-    public function next()
+    public function next(): void
     {
         next($this->injectors['sessions']);
     }
 
-    public function valid()
+    public function valid(): bool
     {
         return current($this->injectors['sessions']) !== false;
     }

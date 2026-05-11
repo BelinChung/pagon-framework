@@ -5,14 +5,14 @@
 
 namespace Pagon;
 
-class CacheTest extends \PHPUnit_Framework_TestCase
+class CacheTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var App
      */
     protected $app;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->app = Pagon::create(array(
             'cache' => array(
@@ -35,7 +35,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
     public function testFactoryNonExists()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
         $none = Cache::create('none');
     }
 
@@ -52,7 +52,7 @@ class CacheTest extends \PHPUnit_Framework_TestCase
 
     public function testDispenseNonExists()
     {
-        $this->setExpectedException('InvalidArgumentException');
+        $this->expectException('InvalidArgumentException');
         $user_cache = Cache::with('cache.user1');
     }
 }
