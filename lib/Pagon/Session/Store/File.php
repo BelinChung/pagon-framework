@@ -16,9 +16,10 @@ class File extends Store
 
     public function open($path = null, $name = null)
     {
-        if (!is_dir($this->injectors['dir'])) {
-            mkdir($this->injectors['dir'], 0777, true);
+        if (!is_dir($this->injectors['dir']) && !mkdir($this->injectors['dir'], 0777, true) && !is_dir($this->injectors['dir'])) {
+            return false;
         }
+        return is_writable($this->injectors['dir']);
     }
 
     public function close()
@@ -36,16 +37,23 @@ class File extends Store
 
     public function write($id, $data)
     {
-        return !!file_put_contents($this->injectors['dir'] . '/SESS_' . $id, $data);
+        return file_put_contents($this->injectors['dir'] . '/SESS_' . $id, $data, LOCK_EX) !== false;
     }
 
     public function destroy($id)
     {
-        return unlink($this->injectors['dir'] . '/' . $id);
+        $path = $this->injectors['dir'] . '/SESS_' . $id;
+        return !is_file($path) || unlink($path);
     }
 
     public function gc($lifetime)
     {
-        return true;
+        $deleted = 0;
+        foreach (glob($this->injectors['dir'] . '/SESS_*') as $path) {
+            if (is_file($path) && filemtime($path) < time() - $lifetime && unlink($path)) {
+                $deleted++;
+            }
+        }
+        return $deleted;
     }
 }

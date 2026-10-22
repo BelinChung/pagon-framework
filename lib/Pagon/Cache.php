@@ -19,9 +19,9 @@ abstract class Cache
      */
     public static function create($type, $config = array())
     {
-        $class = __NAMESPACE__ . '\\Cache\\' . ucfirst(strtolower($type));
+        $class = __NAMESPACE__ . '\\Cache\\' . ucfirst(strtolower((string)$type));
 
-        if (!class_exists($class) && !class_exists($class = $type)) {
+        if (!class_exists($class) && !class_exists($class = (string)$type)) {
             throw new \InvalidArgumentException('Can not find given "' . $type . '" cache adapter');
         }
 
@@ -39,6 +39,10 @@ abstract class Cache
     {
         if (empty(self::$instances[$name])) {
             $config = App::self()->get($name);
+
+            if (!is_array($config) || empty($config['type'])) {
+                throw new \InvalidArgumentException('Missing cache configuration "' . $name . '"');
+            }
 
             self::$instances[$name] = self::create($config['type'], $config);
         }

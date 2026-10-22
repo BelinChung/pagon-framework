@@ -73,7 +73,7 @@ function session($key, $value = null)
  * @param bool   $full
  * @return string
  */
-function url($path, array $query = null, $full = false)
+function url($path, ?array $query = null, $full = false)
 {
     return Url::to($path, $query, $full);
 }
@@ -86,7 +86,7 @@ function url($path, array $query = null, $full = false)
  * @param array  $query
  * @param bool   $full
  */
-function route_url($name, array $params = null, array $query = null, $full = false)
+function route_url($name, ?array $params = null, ?array $query = null, $full = false)
 {
     return Url::route($name, $params, $query, $full);
 }
@@ -99,7 +99,7 @@ function route_url($name, array $params = null, array $query = null, $full = fal
  * @param bool   $full
  * @return string
  */
-function assert_url($path, array $query = null, $full = false)
+function assert_url($path, ?array $query = null, $full = false)
 {
     return Url::asset($path, $query, $full);
 }
@@ -111,7 +111,7 @@ function assert_url($path, array $query = null, $full = false)
  * @param bool  $full
  * @return string
  */
-function current_url(array $query = null, $full = false)
+function current_url(?array $query = null, $full = false)
 {
     return Url::current($query, $full);
 }
@@ -222,7 +222,7 @@ function local($key, $value = null)
  * @param array  $data
  * @param array  $options
  */
-function render($path, array $data = null, array $options = array())
+function render($path, ?array $data = null, array $options = array())
 {
     App::self()->render($path, $data, $options);
 }
@@ -235,7 +235,7 @@ function render($path, array $data = null, array $options = array())
  * @param array  $options
  * @return \Pagon\View
  */
-function compile($path, array $data = null, array $options = array())
+function compile($path, ?array $data = null, array $options = array())
 {
     return App::self()->output->compile($path, $data, $options);
 }
@@ -365,10 +365,11 @@ function array_except($array, $keys)
  * Get magic quotes
  *
  * @return bool
+ * @deprecated Magic quotes were removed in PHP 8.0, always returns false
  */
 function magic_quotes()
 {
-    return function_exists('get_magic_quotes_gpc') and get_magic_quotes_gpc();
+    return false;
 }
 
 /**
@@ -402,7 +403,7 @@ function end_with($haystack, $needle)
  * @param array|string $needle
  * @return bool
  */
-function str_contains($haystack, $needle)
+function pagon_str_contains($haystack, $needle)
 {
     foreach ((array)$needle as $n) {
         if (strpos($haystack, $n) !== false) return true;

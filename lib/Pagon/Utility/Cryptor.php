@@ -2,129 +2,62 @@
 
 namespace Pagon\Utility;
 
-if (!function_exists('mcrypt_encrypt')) {
-    throw new \RuntimeException("Use Cryptor need install php-mcrypt extension");
-}
-
 /**
- * Cryptor
- * encrypt and decrypt with 3DES
- *
- * @package Pagon\Utility
+ * Authenticated, versioned encryption for cookies and CSRF tokens.
  */
 class Cryptor
 {
-    protected $options = array(
-        'cipher' => MCRYPT_RIJNDAEL_256,
-        'mode'   => MCRYPT_MODE_CBC,
-        'block'  => 32,
-        'rand'   => null,
-        'key'    => null
-    );
+    private const PREFIX = 'v2:';
+    private const CIPHER = 'aes-256-gcm';
+    private const NONCE_SIZE = 12;
+    private const TAG_SIZE = 16;
 
-    protected $_iv_size;
+    private string $key;
+    private $legacyDecryptor;
 
-    /**
-     * @param array|string $options
-     * @throws \InvalidArgumentException
-     *
-     *  new Cryptor('key')
-     *  new Cryptor(array('key' => 'test', 'cipher' => MCRYPT_RIJNDAEL_192))
-     */
     public function __construct($options = array())
     {
-        if ($options) {
-            if (is_array($options)) {
-                $this->options = $options + $this->options;
-            } else {
-                $this->options['key'] = (string)$options;
+        if (!extension_loaded('openssl')) {
+            throw new \RuntimeException('Cryptor requires the openssl extension');
+        }
+        $options = is_array($options) ? $options : array('key' => $options);
+        if (!isset($options['key']) || !is_string($options['key']) || $options['key'] === '') {
+            throw new \InvalidArgumentException('Cryptor requires a non-empty string key');
+        }
+        foreach (array('cipher', 'mode', 'rand', 'block') as $option) {
+            if (array_key_exists($option, $options)) {
+                throw new \InvalidArgumentException('Legacy Cryptor option "' . $option . '" is no longer supported');
             }
         }
-
-        if (!$this->options['key']) throw new \InvalidArgumentException('Cryptor need key param');
-
-        // Find the max length of the key, based on cipher and mode
-        $size = mcrypt_get_key_size($this->options['cipher'], $this->options['mode']);
-
-        if (isset($this->options['key'][$size])) {
-            // Shorten the key to the maximum size
-            $this->options['key'] = substr($this->options['key'], 0, $size);
+        $this->legacyDecryptor = $options['legacy_decryptor'] ?? null;
+        if ($this->legacyDecryptor !== null && !is_callable($this->legacyDecryptor)) {
+            throw new \InvalidArgumentException('legacy_decryptor must be callable');
         }
-
-        // Store the IV size
-        $this->_iv_size = mcrypt_get_iv_size($this->options['cipher'], $this->options['mode']);
-
-        // Set the rand type if it has not already been set
-        if ($this->options['rand'] === null) {
-            if (defined('MCRYPT_DEV_URANDOM')) {
-                // Use /dev/urandom
-                $this->options['rand'] = MCRYPT_DEV_URANDOM;
-            } elseif (defined('MCRYPT_DEV_RANDOM')) {
-                // Use /dev/random
-                $this->options['rand'] = MCRYPT_DEV_RANDOM;
-            } else {
-                // Use the system random number generator
-                $this->options['rand'] = MCRYPT_RAND;
-            }
-        }
+        // Preserve the string-key API while separating this key from other uses.
+        $this->key = hash_hkdf('sha256', $options['key'], 32, 'pagon/cryptor/v2');
     }
 
-    /**
-     * Encrypts a string and returns an encrypted string that can be decoded.
-     *
-     * The encrypted binary data is encoded using [base64](http://php.net/base64_encode)
-     * to convert it to a string. This string can be stored in a database,
-     * displayed, and passed using most other means without corruption.
-     *
-     * @param   string $data   data to be encrypted
-     * @return  string
-     */
     public function encrypt($data)
     {
-        if ($this->options['rand'] === MCRYPT_RAND) {
-            // The system random number generator must always be seeded each
-            // time it is used, or it will not produce true random results
-            mt_srand();
+        $nonce = random_bytes(self::NONCE_SIZE);
+        $ciphertext = openssl_encrypt((string)$data, self::CIPHER, $this->key, OPENSSL_RAW_DATA,
+            $nonce, $tag, self::PREFIX, self::TAG_SIZE);
+        if ($ciphertext === false) {
+            throw new \RuntimeException('Encryption failed');
         }
-
-        // Create a random initialization vector of the proper size for the current cipher
-        $iv = mcrypt_create_iv($this->_iv_size, $this->options['rand']);
-
-        // Encrypt the data using the configured options and generated iv
-        $data = mcrypt_encrypt($this->options['cipher'], str_pad($this->options['key'], 32, "\0"), $data, $this->options['mode'], $iv);
-
-        // Use base64 encoding to convert to a string
-        return base64_encode($iv . $data);
+        return self::PREFIX . base64_encode($nonce . $tag . $ciphertext);
     }
 
-    /**
-     * Decrypts an encoded string back to its original value.
-     *
-     * @param   string $data   encoded string to be decrypted
-     * @return  bool|string
-     */
     public function decrypt($data)
     {
-        // Convert the data back to binary
-        $data = base64_decode($data, TRUE);
-
-        if (!$data) {
-            // Invalid base64 data
-            return FALSE;
+        if (!is_string($data)) return false;
+        if (strncmp($data, self::PREFIX, strlen(self::PREFIX)) !== 0) {
+            return $this->legacyDecryptor !== null ? ($this->legacyDecryptor)($data) : false;
         }
-
-        // Extract the initialization vector from the data
-        $iv = substr($data, 0, $this->_iv_size);
-
-        if ($this->_iv_size !== strlen($iv)) {
-            // The iv is not the expected size
-            return FALSE;
-        }
-
-        // Remove the iv from the data
-        $data = substr($data, $this->_iv_size);
-
-        // Return the decrypted data, trimming the \0 padding bytes from the end of the data
-        return rtrim(mcrypt_decrypt($this->options['cipher'], str_pad($this->options['key'], 32, "\0"), $data, $this->options['mode'], $iv), "\0");
+        $payload = base64_decode(substr($data, strlen(self::PREFIX)), true);
+        if ($payload === false || strlen($payload) < self::NONCE_SIZE + self::TAG_SIZE) return false;
+        return openssl_decrypt(substr($payload, self::NONCE_SIZE + self::TAG_SIZE), self::CIPHER,
+            $this->key, OPENSSL_RAW_DATA, substr($payload, 0, self::NONCE_SIZE),
+            substr($payload, self::NONCE_SIZE, self::TAG_SIZE), self::PREFIX);
     }
 }

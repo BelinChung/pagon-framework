@@ -54,7 +54,7 @@ class Memcache extends Cache
      */
     public function set($key, $value, $timeout = 0)
     {
-        return $this->cache->set($key, $value, $timeout);
+        return $this->cache->set($key, $value, 0, (int)$timeout);
     }
 
     /**

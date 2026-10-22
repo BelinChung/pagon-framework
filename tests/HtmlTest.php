@@ -4,14 +4,14 @@ namespace Pagon;
 
 use Pagon\Http\Input;
 
-class HtmlTest extends \PHPUnit_Framework_TestCase
+class HtmlTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var App
      */
     protected $app;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->app = Pagon::create();
         $_SERVER = array(

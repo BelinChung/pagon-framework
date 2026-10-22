@@ -152,7 +152,7 @@ namespace Pagon\Middleware {
 namespace {
     use Pagon\Middleware\I18NTranslator;
 
-    function __($string, array $values = NULL, $lang = 'en')
+    function __($string, ?array $values = null, $lang = 'en')
     {
         if ($lang !== I18NTranslator::lang()) $string = I18NTranslator::get($string);
 

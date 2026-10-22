@@ -18,7 +18,7 @@ class Url
      * @param bool   $full
      * @return string
      */
-    public static function to($path, array $query = null, $full = false)
+    public static function to($path, ?array $query = null, $full = false)
     {
         $url_mode = App::self()->get('url_rewrite');
         if (isset($url_mode)) $url_mode = !$url_mode;
@@ -33,7 +33,7 @@ class Url
      * @param bool   $prefix
      * @return string
      */
-    public static function transform($path, array $query = null, $prefix = false)
+    public static function transform($path, ?array $query = null, $prefix = false)
     {
         if (strpos($path, '://')) $url = $path;
         else {
@@ -53,7 +53,7 @@ class Url
      * @param bool   $full
      * @return string
      */
-    public static function route($name, array $params = null, array $query = null, $full = false)
+    public static function route($name, ?array $params = null, ?array $query = null, $full = false)
     {
         $app = App::self();
 
@@ -79,7 +79,7 @@ class Url
      * @param array  $query
      * @return string
      */
-    public static function asset($path, array $query = null)
+    public static function asset($path, ?array $query = null)
     {
         $asset_url = App::self()->get('asset_url');
 
@@ -93,7 +93,7 @@ class Url
      * @param bool  $full
      * @return string
      */
-    public static function current(array $query = null, $full = false)
+    public static function current(?array $query = null, $full = false)
     {
         $input = App::self()->input;
         return self::to($input->path(), (array)$query + $input->query, $full);

@@ -85,9 +85,8 @@ abstract class LoggerInterface extends EventEmitter
      */
     public function formattedMessages()
     {
-        $that = $this;
-        return array_map(function ($message) use ($that) {
-            return $that->format($message);
+        return array_map(function ($message) {
+            return $this->format($message);
         }, $this->messages);
     }
 

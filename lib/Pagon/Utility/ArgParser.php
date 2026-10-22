@@ -70,7 +70,7 @@ class ArgParser
      * @param array  $argv
      * @param string $usage
      */
-    public function __construct(array $argv = null, $usage = null)
+    public function __construct(?array $argv = null, $usage = null)
     {
         if ($argv === null) $argv = $_SERVER['argv'];
 
@@ -102,7 +102,7 @@ class ArgParser
      * @param array $argv
      * @return array
      */
-    public function argv(array $argv = null)
+    public function argv(?array $argv = null)
     {
         if ($argv) {
             $this->argv = $argv;

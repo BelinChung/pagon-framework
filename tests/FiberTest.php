@@ -2,14 +2,14 @@
 
 use Pagon\Fiber;
 
-class FiberTest extends PHPUnit_Framework_TestCase
+class FiberTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Fiber
      */
     protected $di;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->di = new Fiber(array(
             'a' => 'a'
@@ -90,7 +90,7 @@ class FiberTest extends PHPUnit_Framework_TestCase
     {
         $this->di->md6 = 'md6';
 
-        $this->setExpectedException('BadMethodCallException');
+        $this->expectException('BadMethodCallException');
         $this->di->md6('a');
     }
 

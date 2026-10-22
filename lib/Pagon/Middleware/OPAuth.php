@@ -43,9 +43,8 @@ class OPAuth extends Middleware
     {
         $options = $this->injectors;
         $app = $this->app;
-        $that = $this;
 
-        $callback = function ($req, $res, $next) use ($that, $app, $options) {
+        $callback = function ($req, $res, $next) use ($app, $options) {
             $opauth = new OPAuthService($options, false);
 
             $response = unserialize(base64_decode($app->input->data('opauth')));

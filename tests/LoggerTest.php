@@ -2,14 +2,14 @@
 
 use Pagon\Logger;
 
-class LoggerTest extends PHPUnit_Framework_TestCase
+class LoggerTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @var Logger
      */
     protected $logger;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->logger = new Logger();
     }

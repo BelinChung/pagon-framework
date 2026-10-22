@@ -41,20 +41,6 @@ class Pagon
      */
     public static function create($config = array())
     {
-        $app = new App($config);
-
-        // Set IO depends the run mode
-        if (!$app->cli()) {
-            $app->input = new Http\Input(array('app' => $app));
-            $app->output = new Http\Output(array('app' => $app));
-        } else {
-            $app->input = new Command\Input(array('app' => $app));
-            $app->output = new Command\Output(array('app' => $app));
-        }
-
-        // Init Route
-        $app->router = new Router(array('app' => $app));
-
-        return $app;
+        return new App($config);
     }
-} 
+}

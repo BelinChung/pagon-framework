@@ -119,7 +119,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
     {
         // Auto global
         if (!isset($injectors['global'])) {
-            $injectors['global'] = PHP_SAPI === 'CLI' ? false : true;
+            $injectors['global'] = PHP_SAPI !== 'cli';
         }
 
         parent::__construct($injectors + $this->injectors);
@@ -150,6 +150,9 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      */
     public function startSession()
     {
+        if ($this->injectors['started']) return;
+
+        $nativeActive = $this->injectors['global'] && session_status() === PHP_SESSION_ACTIVE;
         // Session name
         $name = session_name();
 
@@ -157,38 +160,33 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
         $cookies = $this->injectors['app']->input->cookies;
 
         // Check id and generate
-        if (!$this->injectors['id']) {
+        if ($nativeActive) {
+            $this->injectors['id'] = session_id();
+        } elseif (!$this->injectors['id']) {
             if (isset($cookies[$name])) {
                 $this->injectors['id'] = $cookies[$name];
             } else {
-                $this->injectors['id'] = sha1(microtime(true) . rand(1000, 9999));
+                $this->injectors['id'] = bin2hex(random_bytes(20));
             }
         }
 
         // Use cookie automatic?
         if (session_status() !== PHP_SESSION_ACTIVE) {
             ini_set('session.use_cookies', 0);
-            session_cache_limiter(false);
+            session_cache_limiter('');
         }
 
         // Register sessions
         $this->injectors['app']->input->session = $this;
 
         // Support store
-        if ($this->injectors['store']) {
+        if ($this->injectors['store'] && !$nativeActive) {
             $this->injectors['store']->register($this);
             $this->injectors['store']->app = $this->injectors['app'];
 
             if ($this->injectors['global']) {
                 if (session_status() !== PHP_SESSION_ACTIVE) {
-                    session_set_save_handler(
-                        array($this->injectors['store'], 'open'),
-                        array($this->injectors['store'], 'close'),
-                        array($this->injectors['store'], 'read'),
-                        array($this->injectors['store'], 'write'),
-                        array($this->injectors['store'], 'destroy'),
-                        array($this->injectors['store'], 'gc')
-                    );
+                    session_set_save_handler(new Session\Handler($this->injectors['store']), true);
 
                     // Start session
                     session_id($this->injectors['id']);
@@ -200,19 +198,27 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
                 // Get all sessions
                 $this->injectors['sessions'] = & $_SESSION;
             } else {
-                $this->injectors['store']->open();
+                if (!$this->injectors['store']->open()) {
+                    throw new \RuntimeException('Session store could not be opened');
+                }
 
-                $this->injectors['sessions']
-                    = unserialize($this->injectors['store']->read($this->injectors['id']));
+                $data = $this->injectors['store']->read($this->injectors['id']);
+                $sessions = $data === '' || $data === false || $data === null ? array() : unserialize($data);
+                if (!is_array($sessions)) {
+                    throw new \UnexpectedValueException('Session data must contain an array');
+                }
+                $this->injectors['sessions'] = $sessions;
 
                 // @TODO GC and Destroy
             }
         } else {
             if ($this->injectors['global']) {
                 // Start session
-                session_id($this->injectors['id']);
-                if (!session_start()) {
-                    throw new \RuntimeException("Session start failed");
+                if (!$nativeActive) {
+                    session_id($this->injectors['id']);
+                    if (!session_start()) {
+                        throw new \RuntimeException("Session start failed");
+                    }
                 }
 
                 $this->injectors['sessions'] = & $_SESSION;
@@ -228,7 +234,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
         });
 
         // Send cookie to save id
-        if (!isset($cookies[$name])) {
+        if (!$nativeActive && $this->injectors['use_cookie'] && !isset($cookies[$name])) {
             $this->injectors['app']->output->cookie($name, $this->injectors['id']);
         }
 
@@ -307,6 +313,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      */
     public function destroySession()
     {
+        $this->injectors['destroyed'] = true;
         if ($this->injectors['global']) {
             session_destroy();
         } else if ($this->injectors['store']) {
@@ -314,6 +321,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
         } else {
             $this->clearSession();
         }
+        $this->clearSession();
     }
 
     /**
@@ -321,6 +329,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      */
     public function saveSession()
     {
+        if ($this->injectors['destroyed']) return;
         if ($this->injectors['global']) {
             session_write_close();
         } else if ($this->injectors['store']) {
@@ -350,23 +359,25 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Array access to use such as $_SESSION
      */
 
-    public function &offsetGet($offset)
+    public function &offsetGet($offset): mixed
     {
-        $value = $this->getSession($offset);
-        return $value;
+        if (!isset($this->injectors['sessions'][$offset])) {
+            $this->injectors['sessions'][$offset] = null;
+        }
+        return $this->injectors['sessions'][$offset];
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         $this->setSession($offset, $value);
     }
 
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return $this->hasSession($offset);
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         $this->deleteSession($offset);
     }
@@ -375,7 +386,7 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Object intance can be countable
      */
 
-    public function count()
+    public function count(): int
     {
         return count($this->injectors['sessions']);
     }
@@ -384,28 +395,28 @@ class Session extends Fiber implements \ArrayAccess, \Countable, \Iterator
      * Object instance can be loop with foreach
      */
 
-    public function rewind()
+    public function rewind(): void
     {
         reset($this->injectors['sessions']);
     }
 
-    public function current()
+    public function current(): mixed
     {
         return current($this->injectors['sessions']);
     }
 
-    public function key()
+    public function key(): mixed
     {
         return key($this->injectors['sessions']);
     }
 
-    public function next()
+    public function next(): void
     {
         next($this->injectors['sessions']);
     }
 
-    public function valid()
+    public function valid(): bool
     {
-        return current($this->injectors['sessions']) !== false;
+        return key($this->injectors['sessions']) !== null;
     }
 }

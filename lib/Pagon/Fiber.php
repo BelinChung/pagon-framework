@@ -156,7 +156,7 @@ class Fiber implements \ArrayAccess
      * @param \Closure|String $closure
      * @return \Closure
      */
-    public function protect($key, \Closure $closure = null)
+    public function protect($key, ?\Closure $closure = null)
     {
         if (!$closure) {
             $closure = $key;
@@ -184,7 +184,7 @@ class Fiber implements \ArrayAccess
      * @param \Closure        $closure
      * @return \Closure
      */
-    public function share($key, \Closure $closure = null)
+    public function share($key, ?\Closure $closure = null)
     {
         if (!$closure) {
             $closure = $key;
@@ -204,9 +204,8 @@ class Fiber implements \ArrayAccess
     public function extend($key, \Closure $closure)
     {
         $factory = isset($this->injectors[$key]) ? $this->injectors[$key] : null;
-        $that = $this;
-        return $this->injectors[$key] = array(function () use ($closure, $factory, $that) {
-            return $closure(isset($factory[0]) && isset($factory['F$']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $that);
+        return $this->injectors[$key] = array(function () use ($closure, $factory) {
+            return $closure(isset($factory[0]) && isset($factory['F$']) && $factory[0] instanceof \Closure ? $factory[0]() : $factory, $this);
         }, 'F$' => isset($factory['F$']) ? $factory['F$'] : 0);
     }
 
@@ -282,23 +281,23 @@ class Fiber implements \ArrayAccess
      * Implements the interface to support array access
      */
 
-    public function offsetExists($offset)
+    public function offsetExists($offset): bool
     {
         return $this->__isset($offset);
     }
 
-    public function &offsetGet($offset)
+    public function &offsetGet($offset): mixed
     {
         return $this->__get($offset);
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
-        return $this->__set($offset, $value);
+        $this->__set($offset, $value);
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
-        return $this->__unset($offset);
+        $this->__unset($offset);
     }
 }

@@ -13,7 +13,7 @@ class HttpMethodOverride extends Middleware
     public function call()
     {
         if ($override = $this->input->server('X_HTTP_METHOD_OVERRIDE')) {
-            $this->input->set('REQUEST_METHOD', strtoupper($override));
+            $this->input->server['REQUEST_METHOD'] = strtoupper($override);
         } elseif ($this->input->server('REQUEST_METHOD') === 'POST'
             && isset($_POST[$this->injectors['method']])
             && ($method = $_POST[$this->injectors['method']])

@@ -51,9 +51,10 @@ class CSRF extends Middleware
              */
             if ($this->injectors['refer']) {
                 // Parse url
-                $url = parse_url($this->input->refer());
+                $refer = $this->input->refer();
+                $url = $refer ? parse_url($refer) : false;
                 // Check host and domain
-                if ($this->input->domain() != $url['host']) {
+                if (!$url || !isset($url['host']) || $this->input->domain() != $url['host']) {
                     $this->callback();
                     return;
                 }
@@ -72,6 +73,7 @@ class CSRF extends Middleware
             // If enable form injection
             $this->injectors['form']
             // And the page is html content type
+            && $this->output->type()
             && strpos($this->output->type(), 'html')
         ) {
             // Check if buffer start

@@ -182,9 +182,9 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public function checkbox($name, $value, $check = false, $attributes = null)
+    public static function checkbox($name, $value, $check = false, $attributes = null)
     {
-        return self::dom('input', ($check ? array('checked' => 'true') : array()) + (array)$attributes + array('name' => $name, 'value' => $value));
+        return self::dom('input', ($check ? array('checked' => 'true') : array()) + (array)$attributes + array('type' => 'checkbox', 'name' => $name, 'value' => $value));
     }
 
     /**
@@ -196,9 +196,9 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public function radio($name, $value, $check = false, $attributes = null)
+    public static function radio($name, $value, $check = false, $attributes = null)
     {
-        return self::dom('input', ($check ? array('checked' => 'true') : array()) + (array)$attributes + array('name' => $name, 'value' => $value));
+        return self::dom('input', ($check ? array('checked' => 'true') : array()) + (array)$attributes + array('type' => 'radio', 'name' => $name, 'value' => $value));
     }
 
     /**
@@ -211,7 +211,7 @@ class Html
      * @param array|callable $wrapper
      * @return string
      */
-    public static function checkboxes($name, array $values, $checked = null, $attributes = null, $wrapper = null)
+    public static function checkboxes($name, array $values, $checked = null, ?array $attributes = null, $wrapper = null)
     {
         return self::inputGroup($name, 'checkbox', $values, $checked, $attributes, $wrapper);
     }
@@ -226,7 +226,7 @@ class Html
      * @param array|callable $wrapper
      * @return string
      */
-    public static function radios($name, array $values, $checked = null, $attributes = null, $wrapper = null)
+    public static function radios($name, array $values, $checked = null, ?array $attributes = null, $wrapper = null)
     {
         return self::inputGroup($name, 'radio', $values, $checked, $attributes, $wrapper);
     }
@@ -242,13 +242,13 @@ class Html
      * @param array|callable $wrapper
      * @return string
      */
-    public function inputGroup($name, $type, array $values, $checked = null, $attributes = null, $wrapper = null)
+    public static function inputGroup($name, $type, array $values, $checked = null, ?array $attributes = null, $wrapper = null)
     {
-        return self::loop($values, function ($key, $value) use (
+        return self::loop($values, function ($value, $key) use (
             $name, $type, $checked, $attributes, $wrapper
         ) {
             $attr = array('value' => $key, 'type' => $type, 'name' => $name) + (array)$attributes;
-            if ($checked) {
+            if ($checked !== null) {
                 if (is_array($checked) && in_array($key, $checked)
                     || $checked == $key
                 ) {
@@ -276,7 +276,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function repeat($dom, array $values, array $attributes = null)
+    public static function repeat($dom, array $values, ?array $attributes = null)
     {
         return self::loop($values, function ($value) use ($dom, $attributes) {
             return Html::dom($dom, $value, $attributes);
@@ -307,7 +307,7 @@ class Html
      * @param array  $attributes
      * @return string
      */
-    public static function dom($name, $text = '', array $attributes = null)
+    public static function dom($name, $text = '', ?array $attributes = null)
     {
         $self_close = false;
         if (in_array($name, self::$self_close_tags)) {

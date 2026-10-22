@@ -126,7 +126,7 @@ class EventEmitter extends Fiber
      * @param callable     $listener
      * @return $this
      */
-    public function many($event, $times = 1, \Closure $listener)
+    public function many($event, int $times, \Closure $listener)
     {
         if (is_array($event)) {
             foreach ($event as $e) {
