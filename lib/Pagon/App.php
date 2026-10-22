@@ -175,13 +175,14 @@ class App extends EventEmitter
 
         // Auto-initialize input/output/router if not set
         if (!$this->input) {
-            if (!$this->injectors['cli']) {
-                $this->input = new Http\Input(array('app' => $this));
-                $this->output = new Http\Output(array('app' => $this));
-            } else {
-                $this->input = new Command\Input(array('app' => $this));
-                $this->output = new Command\Output(array('app' => $this));
-            }
+            $this->input = $this->injectors['cli']
+                ? new Command\Input(array('app' => $this))
+                : new Http\Input(array('app' => $this));
+        }
+        if (!$this->output) {
+            $this->output = $this->injectors['cli']
+                ? new Command\Output(array('app' => $this))
+                : new Http\Output(array('app' => $this));
         }
         if (!$this->router) {
             $this->router = new Router(array('app' => $this));
@@ -717,6 +718,8 @@ class App extends EventEmitter
 
         if ($this->injectors['error']) set_error_handler(array($this, '__error'));
 
+        $bufferLevel = ob_get_level();
+        $completed = false;
         try {
             // Emit "bundle" event
             $this->emit('bundle');
@@ -790,28 +793,39 @@ class App extends EventEmitter
                 $this->handleError('404');
             }
 
-            // Write direct output to the head of buffer
-            if ($this->injectors['buffer']) $this->output->write(ob_get_clean());
+            $completed = true;
         } catch (Exception\Stop $e) {
-        } catch (\Exception $e) {
+            $completed = true;
+        } catch (\Throwable $e) {
             try {
                 $this->handleError('exception', $e);
             } catch (Exception\Stop $e) {
             }
             $this->emit('error', $e);
+            $completed = true;
+        } finally {
+            try {
+                // Only close buffers opened during this run, preserving the caller's buffer.
+                $captured = '';
+                if ($this->injectors['buffer']) {
+                    while (ob_get_level() > $bufferLevel) {
+                        $captured = ob_get_clean() . $captured;
+                    }
+                }
+                if ($completed) {
+                    if ($captured !== '') $this->output->write($captured);
+                    $this->emit('flush');
+                    $this->flush();
+                }
+            } finally {
+                try {
+                    $this->__cleanup();
+                } finally {
+                    $this->injectors['running'] = false;
+                }
+            }
         }
 
-        // Send start
-        $this->emit('flush');
-
-        // Flush
-        $this->flush();
-
-        // Cleanup
-        $this->__cleanup();
-
-        // Set not running
-        $this->injectors['running'] = false;
     }
 
     /**
@@ -833,7 +847,7 @@ class App extends EventEmitter
         ) {
             // Set error handle
             $this->injectors['errors'][$type][2] = $route;
-        } else if (!$this->injectors['exception'] && $route instanceof \Exception) {
+        } else if (!$this->injectors['exception'] && $route instanceof \Throwable) {
             // Not handle exception and throw it
             throw $route;
         } else {
@@ -851,7 +865,7 @@ class App extends EventEmitter
                 /**
                  * Get error information
                  */
-                $error = $route instanceof \Exception ? $route : null;
+                $error = $route instanceof \Throwable ? $route : null;
                 $title = $error ? $error->getMessage() : $this->injectors['errors'][$type][1];
                 $code = $this->injectors['errors'][$type][0];
                 $message = $route ? ($error ? $error->getFile() . ' [' . $error->getLine() . ']' : (string)$route) : '';
@@ -939,9 +953,6 @@ class App extends EventEmitter
 
         // Send
         echo $this->output->body();
-
-        // Shutdown the output buffer
-        $this->injectors['buffer'] && ob_get_level() && ob_end_flush();
 
         // Clear
         $this->output->clear();
@@ -1051,10 +1062,12 @@ class App extends EventEmitter
     protected function __cleanup()
     {
         // Emit "end" event
-        $this->emit('end');
-
-        // Restore error handle if registered
-        if ($this->injectors['error']) restore_error_handler();
+        try {
+            $this->emit('end');
+        } finally {
+            // Restore error handle even if an end listener fails.
+            if ($this->injectors['error']) restore_error_handler();
+        }
     }
 
     /**

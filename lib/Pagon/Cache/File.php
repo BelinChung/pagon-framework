@@ -42,7 +42,7 @@ class File extends Cache
         if (!$this->exists($key)) {
             return null;
         }
-        $cache = include_once($this->path($key));
+        $cache = include($this->path($key));
         if ($cache['expires'] && $cache['expires'] < time()) {
             return null;
         }

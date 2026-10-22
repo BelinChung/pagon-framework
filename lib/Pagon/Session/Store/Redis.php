@@ -61,6 +61,6 @@ class Redis extends Store
 
     public function gc($lifetime)
     {
-        return true;
+        return 0;
     }
 }

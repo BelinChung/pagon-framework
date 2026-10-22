@@ -403,7 +403,7 @@ function end_with($haystack, $needle)
  * @param array|string $needle
  * @return bool
  */
-function str_contains($haystack, $needle)
+function pagon_str_contains($haystack, $needle)
 {
     foreach ((array)$needle as $n) {
         if (strpos($haystack, $n) !== false) return true;

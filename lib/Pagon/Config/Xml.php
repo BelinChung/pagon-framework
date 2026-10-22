@@ -91,7 +91,7 @@ class Xml
 
         if ($node->childNodes) {
             foreach ($node->childNodes as $child) {
-                $occurrence[$child->nodeName]++;
+                $occurrence[$child->nodeName] = ($occurrence[$child->nodeName] ?? 0) + 1;
             }
         }
 

@@ -47,7 +47,7 @@ class Memcache extends Store
 
     public function write($id, $data)
     {
-        return $this->memcache->set(strtr($this->injectors['name'], array(':id' => $id)), $data, $this->injectors['lifetime']);
+        return $this->memcache->set(strtr($this->injectors['name'], array(':id' => $id)), $data, 0, (int)$this->injectors['lifetime']);
     }
 
     public function destroy($id)
@@ -57,6 +57,6 @@ class Memcache extends Store
 
     public function gc($lifetime)
     {
-        return true;
+        return 0;
     }
 }

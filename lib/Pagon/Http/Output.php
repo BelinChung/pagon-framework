@@ -235,7 +235,8 @@ class Output extends EventEmitter
         if ($time !== null) {
             if (is_integer($time)) {
                 $this->header('Last-Modified', date(DATE_RFC1123, $time));
-                if ($time === strtotime($this->app->input->header('If-Modified-Since'))) {
+                $modifiedSince = $this->app->input->header('If-Modified-Since');
+                if ($modifiedSince !== null && $time === strtotime($modifiedSince)) {
                     $this->app->halt(304);
                 }
             }

@@ -40,6 +40,10 @@ abstract class Cache
         if (empty(self::$instances[$name])) {
             $config = App::self()->get($name);
 
+            if (!is_array($config) || empty($config['type'])) {
+                throw new \InvalidArgumentException('Missing cache configuration "' . $name . '"');
+            }
+
             self::$instances[$name] = self::create($config['type'], $config);
         }
 
